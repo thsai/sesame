@@ -8,7 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.qr.sesame.R;
-import com.qr.sesame.util.SharedPrefsUtil;
+import com.qr.sesame.util.UserInfoSharedPrefsUtil;
 import com.qr.sesame.util.ToastUtil;
 
 import butterknife.BindView;
@@ -26,6 +26,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     Button register;
     @BindView(R.id.login)
     Button login;
+    @BindView(R.id.ip_setting)
+    Button ipSetting;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         ButterKnife.bind(this);
         login.setOnClickListener(this);
         register.setOnClickListener(this);
+        ipSetting.setOnClickListener(this);
     }
 
     @Override
@@ -41,7 +44,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.register:
                 if (isValid()) {
-                    if (SharedPrefsUtil.getUserInfoCache(MainActivity.this) == null || !SharedPrefsUtil.getUserInfoCache(MainActivity.this).getName().equals(etName.getText().toString())) {
+                    //如果没有注册过并且用户名与本地保存的不一样则注册成功
+                    if (UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this) == null || !UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this).getName().equals(etName.getText().toString())) {
                         ToastUtil.shortToast(MainActivity.this, "注册成功!");
                         setUserInfoCache();
                         startQTActivity();
@@ -52,12 +56,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 break;
             case R.id.login:
                 if (isValid()) {
-                    if (SharedPrefsUtil.getUserInfoCache(MainActivity.this) == null) {
+                    if (UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this) == null) {
                         ToastUtil.shortToast(MainActivity.this, "请注册");
                     } else {
-                        if (etName.getText().toString().equals(SharedPrefsUtil.getUserInfoCache(MainActivity.this).getName())
-                                && etPsd.getText().toString().equals(SharedPrefsUtil.getUserInfoCache(MainActivity.this).getPassword())
-                                && etId.getText().toString().equals(SharedPrefsUtil.getUserInfoCache(MainActivity.this).getIdcard())) {
+                        if (etName.getText().toString().equals(UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this).getName())
+                                && etPsd.getText().toString().equals(UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this).getPassword())
+                                && etId.getText().toString().equals(UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this).getIdcard())) {
                             ToastUtil.shortToast(MainActivity.this, "登录成功");
                             startQTActivity();
                         } else {
@@ -65,6 +69,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         }
                     }
                 }
+                break;
+            case R.id.ip_setting:
+                startActivity(new Intent(MainActivity.this,SettingActivity.class));
                 break;
         }
     }
@@ -77,9 +84,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
 
     private void setUserInfoCache() {
-        SharedPrefsUtil.setUserInfoCache(this, etName.getText().toString(), etPsd.getText().toString(), etId.getText().toString());
+        UserInfoSharedPrefsUtil.setUserInfoCache(this, etName.getText().toString(), etPsd.getText().toString(), etId.getText().toString());
     }
 
+    //判断各项输入是否为空
     private boolean isValid() {
         if (TextUtils.isEmpty(etName.getText().toString())) {
             ToastUtil.shortToast(this, "用户名不能为空");

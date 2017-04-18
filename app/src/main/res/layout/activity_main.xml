@@ -12,18 +12,23 @@
         android:id="@+id/et_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:hint="请输入用户名" />
 
     <EditText
         android:id="@+id/et_psd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="请输入密码" />
+        android:gravity="center"
+        android:hint="请输入密码"
+        android:inputType="textPassword" />
 
     <EditText
         android:id="@+id/et_id"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:hint="请输入身份证号码" />
 
 
@@ -46,4 +51,11 @@
             android:layout_weight="1"
             android:text="注册" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/ip_setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="配置" />
 </LinearLayout>

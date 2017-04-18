@@ -11,11 +11,11 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.qr.sesame.R;
-import com.qr.sesame.api.MovieService;
 import com.qr.sesame.api.QRService;
 import com.qr.sesame.entiy.SuccessData;
 import com.qr.sesame.entiy.UserInfo;
-import com.qr.sesame.util.SharedPrefsUtil;
+import com.qr.sesame.util.IPSharedPrefsUtil;
+import com.qr.sesame.util.UserInfoSharedPrefsUtil;
 import com.qr.sesame.util.ToastUtil;
 import com.xys.libzxing.zxing.activity.CaptureActivity;
 
@@ -58,6 +58,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
+    //启动扫描二维码界面
     public void customScan() {
         startActivityForResult(new Intent(this, CaptureActivity.class), 0);
     }
@@ -66,6 +67,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        //扫描二维码成功
         if (resultCode == RESULT_OK) {
             Bundle bundle = data.getExtras();
             if (bundle != null) {
@@ -74,12 +76,11 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
                 Gson gson = new Gson();
                 try {
                     UserInfo userInfo = gson.fromJson(result, UserInfo.class);
-                    if (userInfo.getName().equals(SharedPrefsUtil.getUserInfoCache(this).getName())
-                            && userInfo.getPassword().equals(SharedPrefsUtil.getUserInfoCache(this).getPassword())
-                            && userInfo.getIdcard().equals(SharedPrefsUtil.getUserInfoCache(this).getIdcard())) {
-                        ToastUtil.shortToast(this, "通过了，开门");
+                    //二维码内容和本地保存的用户信息一致则开门
+                    if (userInfo.getName().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getName())
+                            && userInfo.getPassword().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getPassword())
+                            && userInfo.getIdcard().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getIdcard())) {
                         openDoor();
-//                        getMovie();
                     } else {
                         ToastUtil.shortToast(this, "未通过");
                     }
@@ -92,40 +93,6 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
 
     }
 
-    //进行网络请求
-    private void getMovie() {
-        String baseUrl = "https://api.douban.com/v2/movie/";
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .build();
-
-        MovieService movieService = retrofit.create(MovieService.class);
-
-        movieService.getTopMovie(0, 10)
-
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber() {
-                    @Override
-                    public void onCompleted() {
-
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onNext(Object movieEntity) {
-
-                    }
-                });
-    }
-
     private OkHttpClient getOkHttpClient() {
         //日志显示级别
         HttpLoggingInterceptor.Level level = HttpLoggingInterceptor.Level.BODY;
@@ -133,7 +100,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
             @Override
             public void log(String message) {
-                Log.d("wq", "OkHttp====Message:" + message);
+                Log.v("wq",message.toString());
             }
         });
         loggingInterceptor.setLevel(level);
@@ -145,10 +112,9 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         return httpClientBuilder.build();
     }
 
+    //扫描成功后发送请求给服务端
     private void openDoor() {
-
-
-        String baseUrl = "http://10.17.173.21:8080/qrcls/";
+        String baseUrl = "http://" + IPSharedPrefsUtil.getIPCache(this) + ":8080/qrcls/";
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .client(getOkHttpClient())
@@ -157,7 +123,6 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
                 .build();
 
         QRService qrService = retrofit.create(QRService.class);
-
         qrService.scan("true")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -169,11 +134,12 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
 
                     @Override
                     public void onError(Throwable e) {
-
+                        ToastUtil.shortToast(QTActivity.this, "未通过");
                     }
 
                     @Override
                     public void onNext(SuccessData successData) {
+                        ToastUtil.shortToast(QTActivity.this, "通过了，开门");
                     }
                 });
     }

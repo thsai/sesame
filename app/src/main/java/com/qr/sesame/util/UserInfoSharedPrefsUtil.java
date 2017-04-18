@@ -10,9 +10,10 @@ import com.qr.sesame.entiy.UserInfo;
  * Created by wangqi on 2017/4/17.
  */
 
-public class SharedPrefsUtil {
+public class UserInfoSharedPrefsUtil {
     public static String KEY_USER_INFO;
 
+    //保存用户信息到本地
     public static void setUserInfoCache(Context context, String name, String psd, String id) {
         SharedPreferences.Editor editor = context.getSharedPreferences(KEY_USER_INFO, Context.MODE_PRIVATE).edit();
         editor.putString(BundleKey.KEY_NAME, name);
@@ -21,6 +22,7 @@ public class SharedPrefsUtil {
         editor.commit();
     }
 
+    //获取本地用户信息
     public static UserInfo getUserInfoCache(Context context) {
         UserInfo userInfo = new UserInfo();
         SharedPreferences sp = context.getSharedPreferences(KEY_USER_INFO, Context.MODE_PRIVATE);

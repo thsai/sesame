@@ -11,6 +11,7 @@ import android.view.inputmethod.InputMethodManager;
 
 public class BaseActivity extends AppCompatActivity {
 
+    //隐藏软键盘
     public void hideSoftInputMethed(View v) {
         InputMethodManager manager = (InputMethodManager) this.getSystemService(
                 Context.INPUT_METHOD_SERVICE);
@@ -20,6 +21,7 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
+    //弹出软键盘
     public void showSoftInputMethed(View v) {
         InputMethodManager manager = (InputMethodManager) this.getSystemService(
                 Context.INPUT_METHOD_SERVICE);
