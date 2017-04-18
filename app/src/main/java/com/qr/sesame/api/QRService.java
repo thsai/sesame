@@ -1,14 +1,16 @@
 package com.qr.sesame.api;
 
-import io.reactivex.Observable;
+import com.qr.sesame.entiy.SuccessData;
+
 import retrofit2.http.GET;
 import retrofit2.http.Query;
+import rx.Observable;
 
 /**
  * Created by wangqi on 2017/4/17.
  */
 
 public interface QRService {
-    @GET
-    Observable scan(@Query("isPass") String isPass);
+    @GET("QRCodeServlet")
+    Observable<SuccessData> scan(@Query("isPass") String isPass);
 }
