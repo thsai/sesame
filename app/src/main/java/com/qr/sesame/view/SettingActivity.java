@@ -29,6 +29,8 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.setting_activity);
         ButterKnife.bind(this);
+        etIp = (EditText) findViewById(R.id.et_ip);
+        sure = (Button) findViewById(R.id.sure);
         sure.setOnClickListener(this);
     }
 
@@ -37,7 +39,7 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
         switch (v.getId()) {
             case R.id.sure:
                 if (TextUtils.isEmpty(etIp.getText().toString())) {
-                    ToastUtil.shortToast(SettingActivity.this,"请输入ip地址");
+                    ToastUtil.shortToast(SettingActivity.this, "请输入ip地址");
                 } else {
                     IPSharedPrefsUtil.setIPCache(SettingActivity.this, etIp.getText().toString());
                     finish();

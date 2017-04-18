@@ -1,7 +1,10 @@
 package com.qr.sesame.view;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
@@ -15,9 +18,12 @@ import com.qr.sesame.api.QRService;
 import com.qr.sesame.entiy.SuccessData;
 import com.qr.sesame.entiy.UserInfo;
 import com.qr.sesame.util.IPSharedPrefsUtil;
-import com.qr.sesame.util.UserInfoSharedPrefsUtil;
 import com.qr.sesame.util.ToastUtil;
+import com.qr.sesame.util.UserInfoSharedPrefsUtil;
 import com.xys.libzxing.zxing.activity.CaptureActivity;
+import com.zhy.m.permission.MPermissions;
+import com.zhy.m.permission.PermissionDenied;
+import com.zhy.m.permission.PermissionGrant;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -46,6 +52,8 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.qt_activity);
         ButterKnife.bind(this);
+        scan= (Button) findViewById(R.id.scan);
+        tvResult= (TextView) findViewById(R.id.result);
         scan.setOnClickListener(this);
     }
 
@@ -58,9 +66,35 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
-    //启动扫描二维码界面
+    public static final int PERMISSION_CAMERA=0;
+
     public void customScan() {
+        MPermissions.requestPermissions(this, PERMISSION_CAMERA, Manifest.permission.CAMERA);
+    }
+
+    @PermissionGrant(PERMISSION_CAMERA)
+    public void requestCameraGranted(){
+        //启动扫描二维码界面
         startActivityForResult(new Intent(this, CaptureActivity.class), 0);
+    }
+
+    @PermissionDenied(PERMISSION_CAMERA)
+    public void requestCameraDenied(){
+        ToastUtil.shortToast(this,"请前往设置授予照相机权限");
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == PERMISSION_CAMERA) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startActivityForResult(new Intent(this, CaptureActivity.class), 0);
+            } else {
+                ToastUtil.shortToast(this, "请前往设置授予照相机权限");
+            }
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override

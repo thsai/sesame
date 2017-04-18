@@ -34,8 +34,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        etName= (EditText) findViewById(R.id.et_name);
+        etPsd= (EditText) findViewById(R.id.et_psd);
+        etId= (EditText) findViewById(R.id.et_id);
+        login= (Button) findViewById(R.id.login);
         login.setOnClickListener(this);
+        register= (Button) findViewById(R.id.register);
         register.setOnClickListener(this);
+        ipSetting= (Button) findViewById(R.id.ip_setting);
         ipSetting.setOnClickListener(this);
     }
 
