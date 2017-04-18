@@ -100,7 +100,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
             @Override
             public void log(String message) {
-                Log.v("wq",message.toString());
+                Log.v("wq", message.toString());
             }
         });
         loggingInterceptor.setLevel(level);
@@ -139,7 +139,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
 
                     @Override
                     public void onNext(SuccessData successData) {
-                        ToastUtil.shortToast(QTActivity.this, "通过了，开门");
+                        ToastUtil.shortToast(QTActivity.this, "芝麻开门");
                     }
                 });
     }
