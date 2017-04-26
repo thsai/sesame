@@ -12,5 +12,9 @@ import rx.Observable;
 
 public interface QRService {
     @GET("QRCodeServlet")
-    Observable<SuccessData> scan(@Query("isPass") String isPass);
+    Observable<SuccessData> scan(@Query("method") String method,@Query("isPass") String isPass);
+
+    @GET("RegistServlet")
+    Observable<SuccessData> register(@Query("idcard") String idcard,@Query("name") String name,@Query("password") String password);
+
 }

@@ -12,7 +12,9 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.qr.sesame.R;
 import com.qr.sesame.api.QRService;
 import com.qr.sesame.entiy.SuccessData;
@@ -24,6 +26,10 @@ import com.xys.libzxing.zxing.activity.CaptureActivity;
 import com.zhy.m.permission.MPermissions;
 import com.zhy.m.permission.PermissionDenied;
 import com.zhy.m.permission.PermissionGrant;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -52,8 +58,8 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.qt_activity);
         ButterKnife.bind(this);
-        scan= (Button) findViewById(R.id.scan);
-        tvResult= (TextView) findViewById(R.id.result);
+        scan = (Button) findViewById(R.id.scan);
+        tvResult = (TextView) findViewById(R.id.result);
         scan.setOnClickListener(this);
     }
 
@@ -66,21 +72,21 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
-    public static final int PERMISSION_CAMERA=0;
+    public static final int PERMISSION_CAMERA = 0;
 
     public void customScan() {
         MPermissions.requestPermissions(this, PERMISSION_CAMERA, Manifest.permission.CAMERA);
     }
 
     @PermissionGrant(PERMISSION_CAMERA)
-    public void requestCameraGranted(){
+    public void requestCameraGranted() {
         //启动扫描二维码界面
         startActivityForResult(new Intent(this, CaptureActivity.class), 0);
     }
 
     @PermissionDenied(PERMISSION_CAMERA)
-    public void requestCameraDenied(){
-        ToastUtil.shortToast(this,"请前往设置授予照相机权限");
+    public void requestCameraDenied() {
+        ToastUtil.shortToast(this, "请前往设置授予照相机权限");
     }
 
 
@@ -109,15 +115,18 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
                 tvResult.setText(result);
                 Gson gson = new Gson();
                 try {
-                    UserInfo userInfo = gson.fromJson(result, UserInfo.class);
-                    //二维码内容和本地保存的用户信息一致则开门
-                    if (userInfo.getName().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getName())
-                            && userInfo.getPassword().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getPassword())
-                            && userInfo.getIdcard().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getIdcard())) {
-                        openDoor();
-                    } else {
-                        ToastUtil.shortToast(this, "未通过");
+                    List<UserInfo> userInfos = jsonToArrayList(result, UserInfo.class);
+                    for (int i = 0; i < userInfos.size(); i++) {
+                        UserInfo userInfo = userInfos.get(i);
+                        //二维码内容和本地保存的用户信息一致则开门
+                        if (userInfo.getName().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getName())
+                                && userInfo.getPassword().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getPassword())
+                                && userInfo.getIdcard().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getIdcard())) {
+                            openDoor();
+                            return;
+                        }
                     }
+                    ToastUtil.shortToast(this, "未通过");
                 } catch (JsonSyntaxException e) {
                     e.printStackTrace();
                     ToastUtil.shortToast(this, "未通过");
@@ -125,6 +134,18 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
             }
         }
 
+    }
+
+    public static <T> ArrayList<T> jsonToArrayList(String json, Class<T> clazz) {
+        Type type = new TypeToken<ArrayList<JsonObject>>() {
+        }.getType();
+        ArrayList<JsonObject> jsonObjects = new Gson().fromJson(json, type);
+
+        ArrayList<T> arrayList = new ArrayList<>();
+        for (JsonObject jsonObject : jsonObjects) {
+            arrayList.add(new Gson().fromJson(jsonObject, clazz));
+        }
+        return arrayList;
     }
 
     private OkHttpClient getOkHttpClient() {
@@ -157,7 +178,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
                 .build();
 
         QRService qrService = retrofit.create(QRService.class);
-        qrService.scan("true")
+        qrService.scan("scanQRCode","true")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<SuccessData>() {
@@ -173,7 +194,10 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
 
                     @Override
                     public void onNext(SuccessData successData) {
-                        ToastUtil.shortToast(QTActivity.this, "芝麻开门");
+                        if (successData.getStatus() == 1)
+                            ToastUtil.shortToast(QTActivity.this, "芝麻开门");
+                        else
+                            ToastUtil.shortToast(QTActivity.this, successData.getMsg());
                     }
                 });
     }
