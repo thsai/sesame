@@ -64,6 +64,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         ipSetting = (Button) findViewById(R.id.ip_setting);
         ipSetting.setOnClickListener(this);
         pb = (ProgressBar) findViewById(R.id.progressBar);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         init();
     }
 

@@ -16,7 +16,7 @@ public class IPSharedPrefsUtil {
     //保存ip地址
     public static void setIPCache(Context context, String ip) {
         SharedPreferences.Editor editor = context.getSharedPreferences(KEY_IP, Context.MODE_PRIVATE).edit();
-        editor.putString(BundleKey.KEY_ID, ip);
+        editor.putString(BundleKey.KEY_IP, ip);
         editor.commit();
     }
 
