@@ -52,6 +52,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
     Button scan;
     @BindView(R.id.result)
     TextView tvResult;
+    Button btn_change;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,6 +62,8 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         scan = (Button) findViewById(R.id.scan);
         tvResult = (TextView) findViewById(R.id.result);
         scan.setOnClickListener(this);
+        btn_change = (Button) findViewById(R.id.btn_change);
+        btn_change.setOnClickListener(this);
     }
 
     @Override
@@ -68,6 +71,9 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.scan:
                 customScan();
+                break;
+            case R.id.btn_change:
+                startActivity(new Intent(QTActivity.this, MainActivity.class));
                 break;
         }
     }
@@ -115,13 +121,14 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
                 tvResult.setText(result);
                 Gson gson = new Gson();
                 try {
+                    UserInfo cache=UserInfoSharedPrefsUtil.getUserInfoCache(this);
                     List<UserInfo> userInfos = jsonToArrayList(result, UserInfo.class);
                     for (int i = 0; i < userInfos.size(); i++) {
                         UserInfo userInfo = userInfos.get(i);
                         //二维码内容和本地保存的用户信息一致则开门
-                        if (userInfo.getName().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getName())
-                                && userInfo.getPassword().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getPassword())
-                                && userInfo.getIdcard().equals(UserInfoSharedPrefsUtil.getUserInfoCache(this).getIdcard())) {
+                        if (userInfo.getName().equals(cache.getName())
+                                && userInfo.getPassword().equals(cache.getPassword())
+                                && userInfo.getIdcard().equals(cache.getIdcard())) {
                             openDoor();
                             return;
                         }
@@ -178,7 +185,7 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
                 .build();
 
         QRService qrService = retrofit.create(QRService.class);
-        qrService.scan("scanQRCode","true")
+        qrService.scan("scanQRCode", "true")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<SuccessData>() {
@@ -194,9 +201,10 @@ public class QTActivity extends BaseActivity implements View.OnClickListener {
 
                     @Override
                     public void onNext(SuccessData successData) {
-                        if (successData.getStatus() == 1)
-                            ToastUtil.shortToast(QTActivity.this, "芝麻开门");
-                        else
+                        if (successData.getStatus() == 1) {
+                            ToastUtil.shortToast(QTActivity.this, successData.getMsg());
+
+                        } else
                             ToastUtil.shortToast(QTActivity.this, successData.getMsg());
                     }
                 });

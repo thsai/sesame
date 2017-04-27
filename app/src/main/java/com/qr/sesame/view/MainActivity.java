@@ -7,9 +7,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import com.qr.sesame.R;
 import com.qr.sesame.api.QRService;
+import com.qr.sesame.constant.Status;
 import com.qr.sesame.entiy.SuccessData;
 import com.qr.sesame.util.IPSharedPrefsUtil;
 import com.qr.sesame.util.ToastUtil;
@@ -41,6 +43,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @BindView(R.id.ip_setting)
     Button ipSetting;
 
+    Retrofit retrofit;
+    String baseUrl;
+
+    ProgressBar pb;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +63,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         register.setOnClickListener(this);
         ipSetting = (Button) findViewById(R.id.ip_setting);
         ipSetting.setOnClickListener(this);
+        pb = (ProgressBar) findViewById(R.id.progressBar);
+        init();
+    }
+
+    private void init() {
+        baseUrl = "http://" + IPSharedPrefsUtil.getIPCache(this) + ":8080/qrcls/";
+        retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(getOkHttpClient())
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .build();
     }
 
     @Override
@@ -62,19 +82,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.register:
                 if (isValid()) {
+                    showProgress();
                     register();
                 }
                 break;
             case R.id.login:
                 if (isValid()) {
-                    if (etName.getText().toString().equals(UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this).getName())
-                            && etPsd.getText().toString().equals(UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this).getPassword())
-                            && etId.getText().toString().equals(UserInfoSharedPrefsUtil.getUserInfoCache(MainActivity.this).getIdcard())) {
-                        ToastUtil.shortToast(MainActivity.this, "登录成功");
-                        startQTActivity();
-                    } else {
-                        ToastUtil.shortToast(MainActivity.this, "请填写正确信息");
-                    }
+                    showProgress();
+                    login();
                 }
                 break;
             case R.id.ip_setting:
@@ -102,24 +117,54 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         return httpClientBuilder.build();
     }
 
-    //注册
-    private void register() {
-        String baseUrl = "http://" + IPSharedPrefsUtil.getIPCache(this) + ":8080/qrcls/";
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .client(getOkHttpClient())
-                .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .build();
-
-        QRService qrService = retrofit.create(QRService.class);
-        qrService.register(etId.getText().toString(), etName.getText().toString(), etPsd.getText().toString())
+    private void login() {
+        QRService loginService = retrofit.create(QRService.class);
+        loginService.login(etId.getText().toString(), etName.getText().toString(), etPsd.getText().toString())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<SuccessData>() {
                     @Override
                     public void onCompleted() {
+                        dismissProgress();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(SuccessData successData) {
+                        if (successData.getStatus() == 1) {
+                            startQTActivity();
+                        } else {
+                            ToastUtil.shortToast(MainActivity.this, successData.getMsg());
+                        }
+
+                    }
+                });
+    }
+
+    private void showProgress() {
+        pb.setVisibility(View.VISIBLE);
+    }
+
+    private void dismissProgress() {
+        pb.setVisibility(View.GONE);
+    }
+
+
+    //注册
+    private void register() {
+        QRService qrService = retrofit.create(QRService.class);
+        qrService.register("registing", etId.getText().toString(), etName.getText().toString(), etPsd.getText().toString())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<SuccessData>() {
+                    @Override
+                    public void onCompleted() {
+                        dismissProgress();
 
                     }
 
@@ -131,27 +176,27 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                     @Override
                     public void onNext(SuccessData successData) {
-                        if (successData.getStatus() == 1) {
-                            ToastUtil.shortToast(MainActivity.this, "注册成功!");
-                            setUserInfoCache();
-                            startQTActivity();
-                        } else
-                            ToastUtil.shortToast(MainActivity.this, "注册失败!");
+                        switch (successData.getStatus()) {
+                            case Status.APPROVED:
+                                startQTActivity();
+                                break;
+                            case Status.APPROVEING:
+                            case Status.APPROVEERRO:
+                                ToastUtil.shortToast(MainActivity.this, successData.getMsg());
+                                break;
+                        }
                     }
                 });
     }
 
 
     private void startQTActivity() {
+        UserInfoSharedPrefsUtil.setUserInfoCache(this, etName.getText().toString(), etPsd.getText().toString(), etId.getText().toString());
         hideSoftInputMethed(null);
         finish();
         startActivity(new Intent(this, QTActivity.class));
     }
 
-
-    private void setUserInfoCache() {
-        UserInfoSharedPrefsUtil.setUserInfoCache(this, etName.getText().toString(), etPsd.getText().toString(), etId.getText().toString());
-    }
 
     //判断各项输入是否为空
     private boolean isValid() {

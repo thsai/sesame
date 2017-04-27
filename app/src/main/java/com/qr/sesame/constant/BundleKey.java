@@ -9,4 +9,5 @@ public class BundleKey {
     public static final String KEY_PSD="KEY_PSD";
     public static final String KEY_ID="KEY_ID";
     public static final String KEY_IP="KEY_IP";
+    public static final String KEY_APPROVE_STATUS="KEY_APPROVE_STATUS";
 }
